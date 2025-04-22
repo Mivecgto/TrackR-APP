@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackR - Farm Stock Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: lightgreen;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 20px;
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 10px;
+            background: #fff;
+        }
+        button {
+            padding: 6px 12px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>TrackR - Farm Stock Tracker</h1>
+
+    <div class="section">
+        <h3>Add Farm</h3>
+        <input type="text" id="farmInput" placeholder="Farm Name">
+        <button onclick="addFarm()">Add Farm</button>
+    </div>
+
+    <div class="section">
+        <h3>Farms</h3>
+        <ul id="farmList"></ul>
+    </div>
+
+    <div class="section" id="paddockSection" style="display:none;">
+        <h3>Add Paddock to <span id="currentFarmName"></span></h3>
+        <input type="text" id="paddockInput" placeholder="Paddock Name">
+        <input type="number" id="stockNumberInput" placeholder="Number of Stock">
+        <input type="text" id="stockTypeInput" placeholder="Stock Type (e.g., Sheep, Cows)">
+        <button onclick="addPaddock()">Add Paddock</button>
+        <h3>Paddocks</h3>
+        <ul id="paddockList"></ul>
+    </div>
+
+    <script>
+        let farms = JSON.parse(localStorage.getItem('farms')) || {};
+        let currentFarm = '';
+
+        function saveFarms() {
+            localStorage.setItem('farms', JSON.stringify(farms));
+        }
+
+        function displayFarms() {
+            const farmList = document.getElementById('farmList');
+            farmList.innerHTML = '';
+            for (const farm in farms) {
+                const li = document.createElement('li');
+                li.innerHTML = `${farm} <button onclick="openFarm('${farm}')">Open</button>`;
+                farmList.appendChild(li);
+            }
+        }
+
+        function addFarm() {
+            const name = document.getElementById('farmInput').value.trim();
+            if (!name) return alert('Enter a farm name!');
+            if (!farms[name]) farms[name] = [];
+            saveFarms();
+            displayFarms();
+            document.getElementById('farmInput').value = '';
+        }
+
+        function openFarm(farmName) {
+            currentFarm = farmName;
+            document.getElementById('currentFarmName').textContent = farmName;
+            document.getElementById('paddockSection').style.display = 'block';
+            displayPaddocks();
+        }
+
+        function addPaddock() {
+            const paddock = document.getElementById('paddockInput').value.trim();
+            const number = parseInt(document.getElementById('stockNumberInput').value);
+            const type = document.getElementById('stockTypeInput').value.trim();
+
+            if (!paddock || isNaN(number) || !type) return alert('Fill in all fields!');
+
+            farms[currentFarm].push({ paddock, number, type });
+            saveFarms();
+            displayPaddocks();
+
+            document.getElementById('paddockInput').value = '';
+            document.getElementById('stockNumberInput').value = '';
+            document.getElementById('stockTypeInput').value = '';
+        }
+
+        function displayPaddocks() {
+            const paddockList = document.getElementById('paddockList');
+            paddockList.innerHTML = '';
+
+            farms[currentFarm].forEach((p, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `${p.paddock} - ${p.number} ${p.type} 
+                    <button onclick="transferStock(${index})">Transfer</button>`;
+                paddockList.appendChild(li);
+            });
+        }
+
+        function transferStock(index) {
+            const newPaddock = prompt('Enter new paddock name:');
+            if (newPaddock) {
+                farms[currentFarm][index].paddock = newPaddock;
+                saveFarms();
+                displayPaddocks();
+            }
+        }
+
+        displayFarms();
+    </script>
+</body>
+</html>
